@@ -22,8 +22,9 @@ export class Source extends BaseSource<Params> {
         stdin: "piped",
       });
     } catch (e) {
-      console.error("[ddc-mocword] Run \"mocword\" is failed");
-      console.error("[ddc-mocword] \"mocword\" binary seems not installed");
+      console.error("[ddc-mocword] Run \"mocword\" is failed.");
+      console.error("[ddc-mocword] \"mocword\" binary seems not installed.");
+      console.error("[ddc-mocword] Or env MOCWORD_DATA is not set.");
     }
   }
 

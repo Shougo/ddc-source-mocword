@@ -11,9 +11,9 @@ A ddc.vim source for `mocword` for completing words in English.
 
 * https://github.com/high-moctane/mocword-data
 
-* Set `$mocword_DATA_PATH` environment variable
+* Set `$MOCWORD_DATA` environment variable
 
-Please test `mocword -n 100 -g` works from command line.
+Please test `mocword --limit 100` works from command line.
 
 
 ## Configuration
