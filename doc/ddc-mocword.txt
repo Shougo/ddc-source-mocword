@@ -1,0 +1,52 @@
+*ddc-mocword.txt*	Mocword completion for ddc.vim
+
+Author: Shougo <Shougo.Matsu at gmail.com>
+License: MIT license
+
+CONTENTS					*ddc-mocword-contents*
+
+Introduction		|ddc-mocword-introduction|
+Install			|ddc-mocword-install|
+Examples		|ddc-mocword-examples|
+
+
+==============================================================================
+INTRODUCTION					*ddc-mocword-introduction*
+
+A ddc.vim source for `mocword` for completing words in English.
+
+Note: "mocword" binary must be installed in your `$PATH`!!
+
+
+==============================================================================
+INSTALL							*ddc-mocword-install*
+
+Please install both "ddc.vim" and "denops.vim".
+
+https://github.com/Shougo/ddc.vim
+https://github.com/vim-denops/denops.vim
+
+And you must both install "mocword" binary and "mocword-data".
+
+https://github.com/high-moctane/mocword
+https://github.com/high-moctane/mocword-data
+
+You must set `$MOCWORD_DATA` environment variable
+
+Please test `mocword -n 100 -g` works from command line.
+
+
+==============================================================================
+EXAMPLES					*ddc-mocword-examples*
+>
+	call ddc#custom#patch_global('sources', ['mocword'])
+	call ddc#custom#patch_global('sourceOptions', {
+	    \ 'mocword': {
+	    \   'mark': 'mocword',
+	    \   'minAutoCompleteLength': 3,
+	    \   'isVolatile': v:true,
+	    \ }})
+<
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:noet:fen:noet:
