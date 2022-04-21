@@ -22,21 +22,23 @@ export class Source extends BaseSource<Params> {
         stdin: "piped",
       });
     } catch (e) {
-      console.error("[ddc-mocword] Run \"mocword\" is failed.");
-      console.error("[ddc-mocword] \"mocword\" binary seems not installed.");
+      console.error('[ddc-mocword] Run "mocword" is failed.');
+      console.error('[ddc-mocword] "mocword" binary seems not installed.');
       console.error("[ddc-mocword] Or env MOCWORD_DATA is not set.");
     }
   }
 
   async gather(args: {
-    context: Context,
+    context: Context;
   }): Promise<Item[]> {
     if (!this._proc || !this._proc.stdin || !this._proc.stdout) {
       return [];
     }
 
-    await writeAll(this._proc.stdin,
-                   new TextEncoder().encode(args.context.input + "\n"));
+    await writeAll(
+      this._proc.stdin,
+      new TextEncoder().encode(args.context.input + "\n"),
+    );
 
     // Todo: Better implementation
     for await (const line of readLines(this._proc.stdout)) {
@@ -46,5 +48,7 @@ export class Source extends BaseSource<Params> {
     return [];
   }
 
-  params(): Params { return {}; }
+  params(): Params {
+    return {};
+  }
 }
