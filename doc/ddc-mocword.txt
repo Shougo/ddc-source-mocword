@@ -1,17 +1,17 @@
-*ddc-mocword.txt*	Mocword completion for ddc.vim
+*ddc-source-mocword.txt*	Mocword completion for ddc.vim
 
 Author: Shougo <Shougo.Matsu at gmail.com>
 License: MIT license
 
-CONTENTS					*ddc-mocword-contents*
+CONTENTS					*ddc-source-mocword-contents*
 
-Introduction		|ddc-mocword-introduction|
-Install			|ddc-mocword-install|
-Examples		|ddc-mocword-examples|
+Introduction		|ddc-source-mocword-introduction|
+Install			|ddc-source-mocword-install|
+Examples		|ddc-source-mocword-examples|
 
 
 ==============================================================================
-INTRODUCTION					*ddc-mocword-introduction*
+INTRODUCTION				*ddc-source-mocword-introduction*
 
 A ddc.vim source for `mocword` for completing words in English.
 
@@ -19,7 +19,7 @@ Note: "mocword" binary must be installed in your `$PATH`!!
 
 
 ==============================================================================
-INSTALL							*ddc-mocword-install*
+INSTALL						*ddc-source-mocword-install*
 
 Please install both "ddc.vim" and "denops.vim".
 
@@ -37,7 +37,7 @@ Please test `mocword --limit 100` works from command line.
 
 
 ==============================================================================
-EXAMPLES					*ddc-mocword-examples*
+EXAMPLES					*ddc-source-mocword-examples*
 >
 	call ddc#custom#patch_global('sources', ['mocword'])
 	call ddc#custom#patch_global('sourceOptions', {

@@ -1,4 +1,4 @@
-# ddc-mocword: mocword completion for ddc.vim
+# ddc-source-mocword: mocword completion for ddc.vim
 
 A ddc.vim source for `mocword` for completing words in English.
 
