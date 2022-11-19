@@ -18,11 +18,11 @@ Please test `mocword --limit 100` works from command line.
 
 ```vim
 call ddc#custom#patch_global('sources', ['mocword'])
-call ddc#custom#patch_global('sourceOptions', {
-    \ 'mocword': {
-    \   'mark': 'mocword',
-    \   'minAutoCompleteLength': 3,
-    \   'isVolatile': v:true,
+call ddc#custom#patch_global('sourceOptions', #{
+    \  mocword: #{
+    \    mark: 'mocword',
+    \    minAutoCompleteLength: 3,
+    \    isVolatile: v:true,
     \ }})
 ```
 
