@@ -29,7 +29,7 @@ export class Source extends BaseSource<Params> {
     }
   }
 
-  async gather(args: {
+  override async gather(args: {
     context: Context;
     completeStr: string;
   }): Promise<Item[]> {
@@ -56,7 +56,7 @@ export class Source extends BaseSource<Params> {
     return [];
   }
 
-  params(): Params {
+  override params(): Params {
     return {};
   }
 }
