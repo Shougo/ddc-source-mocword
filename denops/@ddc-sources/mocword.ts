@@ -3,8 +3,6 @@ import {
   Context,
   Item,
 } from "https://deno.land/x/ddc_vim@v3.2.0/types.ts";
-import { writeAll } from "https://deno.land/std@0.185.0/streams/write_all.ts";
-import { writerFromStreamWriter } from "https://deno.land/std@0.185.0/streams/writer_from_stream_writer.ts";
 import { assertEquals } from "https://deno.land/std@0.165.0/testing/asserts.ts";
 import { TextLineStream } from "https://deno.land/std@0.183.0/streams/mod.ts";
 
@@ -47,11 +45,8 @@ export class Source extends BaseSource<Params> {
     const precedingLetters = completeStr.slice(0, offset);
 
     const writer = this._proc.stdin.getWriter();
-    await writeAll(
-      writerFromStreamWriter(writer),
-      new TextEncoder().encode(query + "\n"),
-    );
-    writer.releaseLock();
+    await writer.ready;
+    await writer.write(new TextEncoder().encode(query + "\n"));
 
     for await (const line of iterLine(this._proc.stdout)) {
       return line.split(/\s/).map((word: string) => ({
