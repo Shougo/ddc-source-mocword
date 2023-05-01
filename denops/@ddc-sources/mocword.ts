@@ -2,26 +2,28 @@ import {
   BaseSource,
   Context,
   Item,
-} from "https://deno.land/x/ddc_vim@v3.2.0/types.ts";
-import { readLines } from "https://deno.land/std@0.165.0/io/mod.ts";
-import { writeAll } from "https://deno.land/std@0.165.0/streams/mod.ts";
-import { assertEquals } from "https://deno.land/std@0.165.0/testing/asserts.ts";
+} from "https://deno.land/x/ddc_vim@v3.4.0/types.ts";
+import { assertEquals } from "https://deno.land/std@0.185.0/testing/asserts.ts";
+import { TextLineStream } from "https://deno.land/std@0.185.0/streams/mod.ts";
 
 type Params = Record<never, never>;
 
 export class Source extends BaseSource<Params> {
-  _proc: Deno.Process | undefined = undefined;
+  _proc: Deno.ChildProcess | undefined = undefined;
 
   constructor() {
     super();
 
     try {
-      this._proc = Deno.run({
-        cmd: ["mocword", "--limit", "100"],
-        stdout: "piped",
-        stderr: "piped",
-        stdin: "piped",
-      });
+      this._proc = new Deno.Command(
+        "mocword",
+        {
+          args: ["--limit", "100"],
+          stdout: "piped",
+          stderr: "piped",
+          stdin: "piped",
+        },
+      ).spawn();
     } catch (_e) {
       console.error('[ddc-mocword] Run "mocword" is failed.');
       console.error('[ddc-mocword] "mocword" binary seems not installed.');
@@ -41,13 +43,13 @@ export class Source extends BaseSource<Params> {
     const [sentence, offset] = extractWords(completeStr);
     const query = offset > 0 ? sentence : args.context.input;
     const precedingLetters = completeStr.slice(0, offset);
-    await writeAll(
-      this._proc.stdin,
-      new TextEncoder().encode(query + "\n"),
-    );
 
-    // Todo: Better implementation
-    for await (const line of readLines(this._proc.stdout)) {
+    const writer = this._proc.stdin.getWriter();
+    await writer.ready;
+    await writer.write(new TextEncoder().encode(query + "\n"));
+    writer.releaseLock();
+
+    for await (const line of iterLine(this._proc.stdout)) {
       return line.split(/\s/).map((word: string) => ({
         word: precedingLetters.concat(word),
       }));
@@ -58,6 +60,18 @@ export class Source extends BaseSource<Params> {
 
   override params(): Params {
     return {};
+  }
+}
+
+async function* iterLine(r: ReadableStream<Uint8Array>): AsyncIterable<string> {
+  const lines = r
+    .pipeThrough(new TextDecoderStream(), { preventCancel: true })
+    .pipeThrough(new TextLineStream());
+
+  for await (const line of lines) {
+    if ((line as string).length) {
+      yield line as string;
+    }
   }
 }
 
