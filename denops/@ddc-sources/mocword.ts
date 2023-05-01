@@ -2,9 +2,9 @@ import {
   BaseSource,
   Context,
   Item,
-} from "https://deno.land/x/ddc_vim@v3.2.0/types.ts";
-import { assertEquals } from "https://deno.land/std@0.165.0/testing/asserts.ts";
-import { TextLineStream } from "https://deno.land/std@0.183.0/streams/mod.ts";
+} from "https://deno.land/x/ddc_vim@v3.4.0/types.ts";
+import { assertEquals } from "https://deno.land/std@0.185.0/testing/asserts.ts";
+import { TextLineStream } from "https://deno.land/std@0.185.0/streams/mod.ts";
 
 type Params = Record<never, never>;
 
@@ -47,6 +47,7 @@ export class Source extends BaseSource<Params> {
     const writer = this._proc.stdin.getWriter();
     await writer.ready;
     await writer.write(new TextEncoder().encode(query + "\n"));
+    writer.releaseLock();
 
     for await (const line of iterLine(this._proc.stdout)) {
       return line.split(/\s/).map((word: string) => ({
@@ -64,7 +65,7 @@ export class Source extends BaseSource<Params> {
 
 async function* iterLine(r: ReadableStream<Uint8Array>): AsyncIterable<string> {
   const lines = r
-    .pipeThrough(new TextDecoderStream())
+    .pipeThrough(new TextDecoderStream(), { preventCancel: true })
     .pipeThrough(new TextLineStream());
 
   for await (const line of lines) {
