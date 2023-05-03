@@ -49,10 +49,14 @@ export class Source extends BaseSource<Params> {
     await writer.write(new TextEncoder().encode(query + "\n"));
     writer.releaseLock();
 
-    for await (const line of iterLine(this._proc.stdout)) {
-      return line.split(/\s/).map((word: string) => ({
-        word: precedingLetters.concat(word),
-      }));
+    try {
+      for await (const line of iterLine(this._proc.stdout)) {
+        return line.split(/\s/).map((word: string) => ({
+          word: precedingLetters.concat(word),
+        }));
+      }
+    } catch (_e) {
+      // NOTE: ReadableStream may be locked
     }
 
     return [];
