@@ -66,6 +66,7 @@ export class Source extends BaseSource<Params> {
 async function* iterLine(r: ReadableStream<Uint8Array>): AsyncIterable<string> {
   const lines = r
     .pipeThrough(new TextDecoderStream(), {
+      preventAbort: true,
       preventCancel: true,
       preventClose: true,
     })
