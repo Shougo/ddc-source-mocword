@@ -9,7 +9,7 @@ import { TextLineStream } from "https://deno.land/std@0.196.0/streams/mod.ts";
 type Params = Record<never, never>;
 
 export class Source extends BaseSource<Params> {
-  _proc: Deno.ChildProcess | undefined = undefined;
+  private _proc: Deno.ChildProcess | undefined = undefined;
 
   constructor() {
     super();
