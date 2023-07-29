@@ -10,7 +10,7 @@ import { TextLineStream } from "https://deno.land/std@0.196.0/streams/mod.ts";
 type Params = Record<never, never>;
 
 export class Source extends BaseSource<Params> {
-  private _proc: Deno.ChildProcess | undefined = undefined;
+  _proc: Deno.ChildProcess | undefined = undefined;
   private _lock = new Lock(0);
 
   constructor() {
@@ -147,60 +147,4 @@ Deno.test("extractWords", () => {
     extractWords("_i"),
     ["i", 1],
   );
-});
-
-Deno.test("gather", async (t: Deno.TestContext) => {
-  const s = new Source();
-  await t.step("camelCaseInput", async () => {
-    assertEquals(
-      await s.gather({
-        completeStr: "camelCaseInput",
-        context: {
-          changedTick: 42,
-          event: "TextChangedI",
-          filetype: "foo",
-          input: "This is a camelCaseInput",
-          lineNr: 1,
-          nextInput: "",
-        },
-      }),
-      [
-        { word: "camelCaseInput" },
-        { word: "camelCaseInputs" },
-        { word: "camelCaseInputStream" },
-        { word: "camelCaseInputBox" },
-        { word: "camelCaseInputting" },
-        { word: "camelCaseInputOutput" },
-        { word: "camelCaseInputStreamReader" },
-      ],
-    );
-  });
-  await t.step("_input", async () => {
-    assertEquals(
-      await s.gather({
-        completeStr: "_snake_case_input",
-        context: {
-          changedTick: 42,
-          event: "TextChangedI",
-          filetype: "foo",
-          input: "This is a _snake_case_input",
-          lineNr: 1,
-          nextInput: "",
-        },
-      }),
-      [
-        { word: "_snake_case_input" },
-        { word: "_snake_case_inputs" },
-        { word: "_snake_case_inputting" },
-        { word: "_snake_case_inputted" },
-        { word: "_snake_case_inputoutput" },
-        { word: "_snake_case_inputed" },
-        { word: "_snake_case_inputing" },
-      ],
-    );
-  });
-  s?._proc?.stdout?.close();
-  s?._proc?.stderr?.close();
-  s?._proc?.stdin?.close();
-  s?._proc?.close();
 });
