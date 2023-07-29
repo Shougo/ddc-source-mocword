@@ -2,14 +2,16 @@ import {
   BaseSource,
   Context,
   Item,
-} from "https://deno.land/x/ddc_vim@v3.4.0/types.ts";
-import { assertEquals } from "https://deno.land/std@0.185.0/testing/asserts.ts";
-import { TextLineStream } from "https://deno.land/std@0.185.0/streams/mod.ts";
+} from "https://deno.land/x/ddc_vim@v3.9.1/types.ts";
+import { Lock } from "https://deno.land/x/ddc_vim@v3.9.1/deps.ts";
+import { assertEquals } from "https://deno.land/std@0.196.0/assert/mod.ts";
+import { TextLineStream } from "https://deno.land/std@0.196.0/streams/mod.ts";
 
 type Params = Record<never, never>;
 
 export class Source extends BaseSource<Params> {
-  _proc: Deno.ChildProcess | undefined = undefined;
+  private _proc: Deno.ChildProcess | undefined = undefined;
+  private _lock = new Lock(0);
 
   constructor() {
     super();
@@ -39,18 +41,32 @@ export class Source extends BaseSource<Params> {
       return [];
     }
 
-    const completeStr = args.completeStr;
+    const proc = this._proc;
+    let items: Item[] = [];
+
+    await this._lock.lock(async () => {
+      items = await this._gather(args.context, args.completeStr, proc);
+    });
+
+    return items;
+  }
+
+  async _gather(
+    context: Context,
+    completeStr: string,
+    proc: Deno.ChildProcess,
+  ): Promise<Item[]> {
     const [sentence, offset] = extractWords(completeStr);
-    const query = offset > 0 ? sentence : args.context.input;
+    const query = offset > 0 ? sentence : context.input;
     const precedingLetters = completeStr.slice(0, offset);
 
-    const writer = this._proc.stdin.getWriter();
+    const writer = proc.stdin.getWriter();
     await writer.ready;
     await writer.write(new TextEncoder().encode(query + "\n"));
     writer.releaseLock();
 
     try {
-      for await (const line of iterLine(this._proc.stdout)) {
+      for await (const line of iterLine(proc.stdout)) {
         return line.split(/\s/).map((word: string) => ({
           word: precedingLetters.concat(word),
         }));
