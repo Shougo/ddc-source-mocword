@@ -3,7 +3,6 @@ import {
   Context,
   Item,
 } from "https://deno.land/x/ddc_vim@v3.9.1/types.ts";
-import { Lock } from "https://deno.land/x/ddc_vim@v3.9.1/deps.ts";
 import { assertEquals } from "https://deno.land/std@0.196.0/assert/mod.ts";
 import { TextLineStream } from "https://deno.land/std@0.196.0/streams/mod.ts";
 
@@ -11,7 +10,6 @@ type Params = Record<never, never>;
 
 export class Source extends BaseSource<Params> {
   _proc: Deno.ChildProcess | undefined = undefined;
-  private _lock = new Lock(0);
 
   constructor() {
     super();
@@ -41,32 +39,17 @@ export class Source extends BaseSource<Params> {
       return [];
     }
 
-    const proc = this._proc;
-    let items: Item[] = [];
-
-    await this._lock.lock(async () => {
-      items = await this._gather(args.context, args.completeStr, proc);
-    });
-
-    return items;
-  }
-
-  async _gather(
-    context: Context,
-    completeStr: string,
-    proc: Deno.ChildProcess,
-  ): Promise<Item[]> {
-    const [sentence, offset] = extractWords(completeStr);
-    const query = offset > 0 ? sentence : context.input;
-    const precedingLetters = completeStr.slice(0, offset);
-
-    const writer = proc.stdin.getWriter();
-    await writer.ready;
-    await writer.write(new TextEncoder().encode(query + "\n"));
-    writer.releaseLock();
+    const [sentence, offset] = extractWords(args.completeStr);
+    const query = offset > 0 ? sentence : args.context.input;
+    const precedingLetters = args.completeStr.slice(0, offset);
 
     try {
-      for await (const line of iterLine(proc.stdout)) {
+      const writer = this._proc.stdin.getWriter();
+      await writer.ready;
+      await writer.write(new TextEncoder().encode(query + "\n"));
+      writer.releaseLock();
+
+      for await (const line of iterLine(this._proc.stdout)) {
         return line.split(/\s/).map((word: string) => ({
           word: precedingLetters.concat(word),
         }));
@@ -103,16 +86,23 @@ function extractWords(
   completeStr: string,
 ): [string, number] {
   const upperCaseRegexp = /[A-Z][A-Z]+/g;
-  const camelCaseRegexp = /([A-Z]?[a-z]+|[A-Z][a-z]*)/g; // Also matched to PascalCase
-  const snakeCaseRegexp = /[a-z][a-z]*/g; // Also matched to kebab-case, etc.
+
+  // Also matched to PascalCase
+  const camelCaseRegexp = /([A-Z]?[a-z]+|[A-Z][a-z]*)/g;
+
+  // Also matched to kebab-case, etc.
+  const snakeCaseRegexp = /[a-z][a-z]*/g;
+
   let matches: string[] | null = completeStr.match(upperCaseRegexp);
   if (matches === null) matches = completeStr.match(camelCaseRegexp);
   if (matches === null) matches = completeStr.match(snakeCaseRegexp);
   if (matches === null) return [completeStr, 0];
+
   const sentence = matches.join(" ");
   if (completeStr.match(/[^a-zA-Z]+$/)) {
     return [sentence.concat(" "), completeStr.length];
   }
+
   const lastWord = matches.at(-1) || completeStr;
   const offset = completeStr.lastIndexOf(lastWord);
   return [sentence, offset];
