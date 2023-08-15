@@ -2,11 +2,11 @@ import {
   BaseSource,
   Context,
   Item,
-} from "https://deno.land/x/ddc_vim@v3.9.1/types.ts";
-import { assertEquals } from "https://deno.land/std@0.196.0/assert/mod.ts";
-import { TextLineStream } from "https://deno.land/std@0.196.0/streams/mod.ts";
+} from "https://deno.land/x/ddc_vim@v4.0.4/types.ts";
+import { assertEquals } from "https://deno.land/std@0.198.0/assert/mod.ts";
+import { TextLineStream } from "https://deno.land/std@0.198.0/streams/mod.ts";
 
-type Params = Record<never, never>;
+type Params = Record<string, never>;
 
 export class Source extends BaseSource<Params> {
   private _proc: Deno.ChildProcess | undefined = undefined;
