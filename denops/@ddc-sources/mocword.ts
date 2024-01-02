@@ -1,21 +1,23 @@
+import { BaseSource, Item } from "https://deno.land/x/ddc_vim@v4.3.1/types.ts";
 import {
-  BaseSource,
-  Context,
-  Item,
-} from "https://deno.land/x/ddc_vim@v4.0.4/types.ts";
-import { assertEquals } from "https://deno.land/std@0.198.0/assert/mod.ts";
-import { TextLineStream } from "https://deno.land/std@0.198.0/streams/mod.ts";
+  GatherArguments,
+  OnInitArguments,
+} from "https://deno.land/x/ddc_vim@v4.3.1/base/source.ts";
+import { assertEquals } from "https://deno.land/std@0.210.0/assert/mod.ts";
+import { TextLineStream } from "https://deno.land/std@0.210.0/streams/text_line_stream.ts";
 
 type Params = Record<string, never>;
 
+const encoder = new TextEncoder();
+
 export class Source extends BaseSource<Params> {
-  private _proc: Deno.ChildProcess | undefined = undefined;
+  #proc: Deno.ChildProcess | undefined;
+  #readCallback: (result: string) => void = () => {};
+  #writer: WritableStreamDefaultWriter<Uint8Array> | undefined;
 
-  constructor() {
-    super();
-
+  override async onInit(args: OnInitArguments<Params>): Promise<void> {
     try {
-      this._proc = new Deno.Command(
+      this.#proc = new Deno.Command(
         "mocword",
         {
           args: ["--limit", "100"],
@@ -24,18 +26,31 @@ export class Source extends BaseSource<Params> {
           stdin: "piped",
         },
       ).spawn();
-    } catch (_e) {
-      console.error('[ddc-mocword] Run "mocword" is failed.');
-      console.error('[ddc-mocword] "mocword" binary seems not installed.');
-      console.error("[ddc-mocword] Or env MOCWORD_DATA is not set.");
+    } catch {
+      await args.denops.call(
+        "ddc#util#print_error",
+        'Spawning "mocword" is failed. "mocword" binary seems not installed',
+        "ddc-source-mocword",
+      );
+      return;
     }
+    this.#proc.stdout
+      .pipeThrough(new TextDecoderStream())
+      .pipeThrough(new TextLineStream())
+      .pipeTo(
+        new WritableStream({
+          write: (chunk: string) => this.#readCallback(chunk),
+        }),
+      ).finally(() => {
+        this.#proc = undefined;
+        this.#readCallback = () => {};
+        this.#writer = undefined;
+      });
+    this.#writer = this.#proc.stdin.getWriter();
   }
 
-  override async gather(args: {
-    context: Context;
-    completeStr: string;
-  }): Promise<Item[]> {
-    if (!this._proc || !this._proc.stdin || !this._proc.stdout) {
+  override async gather(args: GatherArguments<Params>): Promise<Item[]> {
+    if (!this.#proc || !this.#writer) {
       return [];
     }
 
@@ -43,42 +58,16 @@ export class Source extends BaseSource<Params> {
     const query = offset > 0 ? sentence : args.context.input;
     const precedingLetters = args.completeStr.slice(0, offset);
 
-    try {
-      const writer = this._proc.stdin.getWriter();
-      await writer.ready;
-      await writer.write(new TextEncoder().encode(query + "\n"));
-      writer.releaseLock();
+    const { promise, resolve } = Promise.withResolvers<string>();
+    this.#readCallback = resolve;
 
-      for await (const line of iterLine(this._proc.stdout)) {
-        return line.split(/\s/).map((word: string) => ({
-          word: precedingLetters.concat(word),
-        }));
-      }
-    } catch (_e) {
-      // NOTE: ReadableStream may be locked
-    }
-
-    return [];
+    await this.#writer.write(encoder.encode(query + "\n"));
+    return (await promise).split(/\s/)
+      .map((word: string) => ({ word: precedingLetters.concat(word) }));
   }
 
   override params(): Params {
     return {};
-  }
-}
-
-async function* iterLine(r: ReadableStream<Uint8Array>): AsyncIterable<string> {
-  const lines = r
-    .pipeThrough(new TextDecoderStream(), {
-      preventAbort: true,
-      preventCancel: true,
-      preventClose: true,
-    })
-    .pipeThrough(new TextLineStream());
-
-  for await (const line of lines) {
-    if ((line as string).length) {
-      yield line as string;
-    }
   }
 }
 
