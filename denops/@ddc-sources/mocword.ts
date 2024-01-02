@@ -11,13 +11,13 @@ type Params = Record<string, never>;
 const encoder = new TextEncoder();
 
 export class Source extends BaseSource<Params> {
-  #proc: Deno.ChildProcess | undefined;
-  #readCallback: (result: string) => void = () => {};
-  #writer: WritableStreamDefaultWriter<Uint8Array> | undefined;
+  private proc: Deno.ChildProcess | undefined;
+  private readCallback: (result: string) => void = () => {};
+  private writer: WritableStreamDefaultWriter<Uint8Array> | undefined;
 
   override async onInit(args: OnInitArguments<Params>): Promise<void> {
     try {
-      this.#proc = new Deno.Command(
+      this.proc = new Deno.Command(
         "mocword",
         {
           args: ["--limit", "100"],
@@ -34,23 +34,23 @@ export class Source extends BaseSource<Params> {
       );
       return;
     }
-    this.#proc.stdout
+    this.proc.stdout
       .pipeThrough(new TextDecoderStream())
       .pipeThrough(new TextLineStream())
       .pipeTo(
         new WritableStream({
-          write: (chunk: string) => this.#readCallback(chunk),
+          write: (chunk: string) => this.readCallback(chunk),
         }),
       ).finally(() => {
-        this.#proc = undefined;
-        this.#readCallback = () => {};
-        this.#writer = undefined;
+        this.proc = undefined;
+        this.readCallback = () => {};
+        this.writer = undefined;
       });
-    this.#writer = this.#proc.stdin.getWriter();
+    this.writer = this.proc.stdin.getWriter();
   }
 
   override async gather(args: GatherArguments<Params>): Promise<Item[]> {
-    if (!this.#proc || !this.#writer) {
+    if (!this.proc || !this.writer) {
       return [];
     }
 
@@ -59,9 +59,9 @@ export class Source extends BaseSource<Params> {
     const precedingLetters = args.completeStr.slice(0, offset);
 
     const { promise, resolve } = Promise.withResolvers<string>();
-    this.#readCallback = resolve;
+    this.readCallback = resolve;
 
-    await this.#writer.write(encoder.encode(query + "\n"));
+    await this.writer.write(encoder.encode(query + "\n"));
     return (await promise).split(/\s/)
       .map((word: string) => ({ word: precedingLetters.concat(word) }));
   }
