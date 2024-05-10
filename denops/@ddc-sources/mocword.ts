@@ -4,8 +4,8 @@ import {
   OnInitArguments,
 } from "https://deno.land/x/ddc_vim@v5.0.0/base/source.ts";
 import { printError } from "https://deno.land/x/ddc_vim@v5.0.0/utils.ts";
-import { assertEquals } from "https://deno.land/std@0.222.1/assert/mod.ts";
-import { TextLineStream } from "https://deno.land/std@0.222.1/streams/text_line_stream.ts";
+import { assertEquals } from "jsr:@std/assert@0.225.1";
+import { TextLineStream } from "jsr:@std/streams@0.224.0/text-line-stream";
 
 type Params = Record<string, never>;
 
