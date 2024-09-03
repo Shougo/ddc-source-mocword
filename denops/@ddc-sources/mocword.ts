@@ -1,12 +1,13 @@
-import { BaseSource, type Item } from "jsr:@shougo/ddc-vim@6.0.0/types";
+import { type Item } from "jsr:@shougo/ddc-vim@~7.0.0/types";
 import {
+  BaseSource,
   type GatherArguments,
   type OnInitArguments,
-} from "jsr:@shougo/ddc-vim@6.0.0/source";
-import { printError } from "jsr:@shougo/ddc-vim@6.0.0/utils";
+} from "jsr:@shougo/ddc-vim@~7.0.0/source";
+import { printError } from "jsr:@shougo/ddc-vim@~7.0.0/utils";
 
-import { assertEquals } from "jsr:@std/assert@1.0.1";
-import { TextLineStream } from "jsr:@std/streams@1.0.0/text-line-stream";
+import { assertEquals } from "jsr:@std/assert@~1.0.3/equals";
+import { TextLineStream } from "jsr:@std/streams@~1.0.3/text-line-stream";
 
 type Params = Record<string, never>;
 
