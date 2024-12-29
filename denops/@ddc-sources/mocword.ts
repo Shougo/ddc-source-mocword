@@ -1,10 +1,10 @@
-import { type Item } from "jsr:@shougo/ddc-vim@~7.0.0/types";
+import { type Item } from "jsr:@shougo/ddc-vim@~9.1.0/types";
 import {
   BaseSource,
   type GatherArguments,
   type OnInitArguments,
-} from "jsr:@shougo/ddc-vim@~7.0.0/source";
-import { printError } from "jsr:@shougo/ddc-vim@~7.0.0/utils";
+} from "jsr:@shougo/ddc-vim@~9.1.0/source";
+import { printError } from "jsr:@shougo/ddc-vim@~9.1.0/utils";
 
 import { assertEquals } from "jsr:@std/assert@~1.0.3/equals";
 import { TextLineStream } from "jsr:@std/streams@~1.0.3/text-line-stream";
@@ -35,6 +35,10 @@ export class Source extends BaseSource<Params> {
           args.denops,
           'Failed to spawn "mocword". "mocword" binary seems not installed or not in $PATH.',
         );
+        await printError(
+          args.denops,
+          `$PATH=${Deno.env.get("PATH")}`,
+        );
         return;
       }
       throw error;
@@ -56,6 +60,10 @@ export class Source extends BaseSource<Params> {
         await printError(
           args.denops,
           '"mocword" exited with non-zero status code. $MOCWORD_DATA seems not set correctly.',
+        );
+        await printError(
+          args.denops,
+          `$MOCWORD_DATA=${Deno.env.get("MOCWORD_DATA")}`,
         );
       }
     });
