@@ -9,7 +9,9 @@ import { printError } from "jsr:@shougo/ddc-vim@~9.1.0/utils";
 import { assertEquals } from "jsr:@std/assert@~1.0.3/equals";
 import { TextLineStream } from "jsr:@std/streams@~1.0.3/text-line-stream";
 
-type Params = Record<string, never>;
+type Params = {
+  commandPath: string;
+};
 
 const encoder = new TextEncoder();
 
@@ -19,9 +21,10 @@ export class Source extends BaseSource<Params> {
   #writer: WritableStreamDefaultWriter<Uint8Array> | undefined;
 
   override async onInit(args: OnInitArguments<Params>): Promise<void> {
+    const commandPath = args.sourceParams.commandPath;
     try {
       this.#proc = new Deno.Command(
-        "mocword",
+        commandPath,
         {
           args: ["--limit", "100"],
           stdout: "piped",
@@ -33,7 +36,7 @@ export class Source extends BaseSource<Params> {
       if (error instanceof Deno.errors.NotFound) {
         await printError(
           args.denops,
-          'Failed to spawn "mocword". "mocword" binary seems not installed or not in $PATH.',
+          `Failed to spawn ${commandPath}. It seems not installed or not in $PATH.`,
         );
         await printError(
           args.denops,
@@ -59,7 +62,7 @@ export class Source extends BaseSource<Params> {
       if (!status.success) {
         await printError(
           args.denops,
-          '"mocword" exited with non-zero status code. $MOCWORD_DATA seems not set correctly.',
+          `${commandPath} exited with non-zero status code. $MOCWORD_DATA seems not set correctly.`,
         );
         await printError(
           args.denops,
@@ -88,7 +91,9 @@ export class Source extends BaseSource<Params> {
   }
 
   override params(): Params {
-    return {};
+    return {
+      commandPath: "mocword",
+    };
   }
 }
 
