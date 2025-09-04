@@ -1,19 +1,17 @@
-import { type Item } from "jsr:@shougo/ddc-vim@~9.1.0/types";
+import type { Item } from "@shougo/ddc-vim/types";
 import {
   BaseSource,
   type GatherArguments,
   type OnInitArguments,
-} from "jsr:@shougo/ddc-vim@~9.1.0/source";
-import { printError } from "jsr:@shougo/ddc-vim@~9.1.0/utils";
+} from "@shougo/ddc-vim/source";
+import { printError } from "@shougo/ddc-vim/utils";
 
-import { assertEquals } from "jsr:@std/assert@~1.0.3/equals";
-import { TextLineStream } from "jsr:@std/streams@~1.0.3/text-line-stream";
+import { assertEquals } from "@std/assert/equals";
+import { TextLineStream } from "@std/streams/text-line-stream";
 
 type Params = {
   commandPath: string;
 };
-
-const encoder = new TextEncoder();
 
 export class Source extends BaseSource<Params> {
   #proc: Deno.ChildProcess | undefined;
@@ -85,6 +83,7 @@ export class Source extends BaseSource<Params> {
     const { promise, resolve } = Promise.withResolvers<string>();
     this.#readCallback = resolve;
 
+    const encoder = new TextEncoder();
     await this.#writer.write(encoder.encode(query + "\n"));
     return (await promise).split(/\s/)
       .map((word: string) => ({ word: precedingLetters.concat(word) }));
