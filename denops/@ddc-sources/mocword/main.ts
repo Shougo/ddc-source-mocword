@@ -85,7 +85,7 @@ export class Source extends BaseSource<Params> {
 
     const encoder = new TextEncoder();
     await this.#writer.write(encoder.encode(query + "\n"));
-    return (await promise).split(/\s/)
+    return (await promise).split(/\s/).filter(Boolean)
       .map((word: string) => ({ word: precedingLetters.concat(word) }));
   }
 
